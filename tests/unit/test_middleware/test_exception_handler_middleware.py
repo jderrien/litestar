@@ -17,6 +17,7 @@ from litestar.status_codes import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER
 from litestar.testing import TestClient, create_test_client
 from litestar.types import ExceptionHandlersMap
 from litestar.types.asgi_types import HTTPScope
+from tests.helpers import cleanup_logging_impl
 
 if TYPE_CHECKING:
     from _pytest.logging import LogCaptureFixture
@@ -27,6 +28,12 @@ if TYPE_CHECKING:
 
 async def dummy_app(scope: Any, receive: Any, send: Any) -> None:
     return None
+
+
+@pytest.fixture(autouse=True)
+def cleanup_logging() -> None:
+    with cleanup_logging_impl():
+        pass
 
 
 @pytest.fixture()

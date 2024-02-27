@@ -18,6 +18,7 @@ from litestar.middleware.logging import LoggingMiddlewareConfig
 from litestar.params import Body
 from litestar.status_codes import HTTP_200_OK, HTTP_201_CREATED
 from litestar.testing import create_test_client
+from tests.helpers import cleanup_logging_impl
 
 if TYPE_CHECKING:
     from _pytest.logging import LogCaptureFixture
@@ -28,6 +29,12 @@ if TYPE_CHECKING:
 
 
 pytestmark = pytest.mark.usefixtures("reset_httpx_logging")
+
+
+@pytest.fixture(autouse=True)
+def cleanup_logging() -> None:
+    with cleanup_logging_impl():
+        pass
 
 
 @pytest.fixture

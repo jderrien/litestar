@@ -297,6 +297,7 @@ def get_logger() -> GetLogger:
     # due to the limitations of caplog we have to place this call here.
     # we also have to allow propagation.
     return LoggingConfig(
+        logging_module="logging",
         handlers=logging_default_handlers,
         loggers={
             "litestar": {"level": "INFO", "handlers": ["queue_listener"], "propagate": True},
