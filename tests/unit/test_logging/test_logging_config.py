@@ -6,7 +6,7 @@ from logging.handlers import QueueHandler
 from queue import Queue
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Dict, Generator, Optional
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import picologging
 import pytest
@@ -76,25 +76,47 @@ def test_correct_dict_config_called(
         assert log_config.handlers == expected_default_handlers
 
 
-@pytest.mark.parametrize("picologging_exists", [True, False])
-def test_correct_default_handlers_set(picologging_exists: bool) -> None:
+@pytest.mark.parametrize(
+    "picologging_exists, expected_handlers",
+    [
+        [True, default_picologging_handlers],
+        [False, default_handlers],
+    ],
+)
+def test_correct_default_handlers_set(picologging_exists: bool, expected_handlers: Any) -> None:
     with patch("litestar.logging.config.find_spec") as find_spec_mock:
         find_spec_mock.return_value = picologging_exists
         log_config = LoggingConfig()
-
-        if picologging_exists:
-            assert log_config.handlers == default_picologging_handlers
-        else:
-            assert log_config.handlers == default_handlers
+        assert log_config.handlers == expected_handlers
 
 
-@pytest.mark.parametrize("logging_module", ["logging", "picologging"])
-def test_dictconfig_on_startup(logging_module: str) -> None:
-    dict_config_class = f"{logging_module}.config.dictConfig"
-    with patch(dict_config_class) as dict_config_mock:
-        test_logger = LoggingConfig(logging_module=logging_module)
-        with create_test_client([], on_startup=[test_logger.configure]):
-            assert dict_config_mock.called
+@pytest.mark.parametrize(
+    "logging_module, expected_handlers",
+    [
+        ["logging", default_handlers],
+        ["picologging", default_picologging_handlers],
+    ],
+)
+def test_correct_default_handlers_set_logging_module(logging_module: str, expected_handlers: Any) -> None:
+    log_config = LoggingConfig(logging_module=logging_module)
+    assert log_config.handlers == expected_handlers
+
+
+@pytest.mark.parametrize(
+    "logging_module, dict_config_not_called",
+    [
+        ["logging", "picologging.config.dictConfig"],
+        ["picologging", "logging.config.dictConfig"],
+    ],
+)
+def test_dictconfig_on_startup(logging_module: str, dict_config_not_called: str) -> None:
+    with patch(f"{logging_module}.config.dictConfig") as dict_config_mock:
+        with patch(dict_config_not_called) as dict_config_not_called_mock:
+            test_logger = LoggingConfig(logging_module=logging_module)
+            with create_test_client([], on_startup=[test_logger.configure], logging_config=None):
+                assert dict_config_mock.called
+                assert dict_config_mock.call_count == 1
+                assert dict_config_not_called_mock.call_count == 0
 
 
 @pytest.mark.parametrize(
@@ -156,15 +178,6 @@ def test_default_queue_listener_handler(
     var = "test_var"
     logger.info("%s", var)
     assert_log(handler.queue, expected="INFO :: test_logger :: test_var", count=1)
-
-
-# TODO review that -- might need to merge with `test_dictconfig_on_startup`
-@pytest.mark.skip(reason="Failing test")
-@patch("picologging.config.dictConfig")
-def test_picologging_dictconfig_when_disabled(dict_config_mock: Mock) -> None:
-    test_logger = LoggingConfig(loggers={"app": {"level": "INFO", "handlers": ["console"]}}, handlers=default_handlers)
-    with create_test_client([], on_startup=[test_logger.configure], logging_config=None):
-        assert not dict_config_mock.called
 
 
 def test_get_logger_without_logging_config() -> None:
