@@ -192,8 +192,6 @@ class LoggingConfig(BaseLoggingConfig):
     """A dict in which each key is a filter id and each value is a dict describing how to configure the corresponding
     Filter instance.
     """
-    propagate: bool = field(default=True)
-    """If messages must propagate to handlers higher up the logger hierarchy from this logger."""
     formatters: dict[str, dict[str, Any]] = field(default_factory=_get_default_formatters)
     handlers: dict[str, dict[str, Any]] = field(default_factory=dict)
     """A dict in which each key is a handler id and each value is a dict describing how to configure the corresponding
