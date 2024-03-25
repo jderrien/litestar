@@ -170,14 +170,11 @@ class BaseLoggingConfig(ABC):
 
 @dataclass
 class LoggingConfig(BaseLoggingConfig):
-    """Configuration class for standard logging.
-
-    Notes:
-        - If 'picologging' is installed it will be used by default.
-    """
+    """Configuration class for standard logging."""
 
     logging_module: str = field(default_factory=_get_default_logging_module)
-    """Logging module. 'logging' and 'picologging' are supported, 'picologging' will be the default if installed."""
+    """Logging module. ``logging`` and ``picologging`` are supported. ``picologging`` will be used by default if
+    installed."""
     version: Literal[1] = field(default=1)
     """The only valid value at present is 1."""
     incremental: bool = field(default=False)
@@ -256,6 +253,7 @@ class LoggingConfig(BaseLoggingConfig):
         """
 
         excluded_fields = {
+            "logging_module",
             "configure_root_logger",
             "exception_logging_handler",
             "log_exceptions",

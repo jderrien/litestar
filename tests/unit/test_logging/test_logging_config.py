@@ -384,3 +384,27 @@ def test_customizing_handler(
 
     assert_logger(get_logger("litestar"))
     assert_logger(get_logger("test_logger"))
+
+
+@pytest.mark.parametrize("logging_module", ["logging", "picologging"])
+def test_excluded_fields(logging_module: str) -> None:
+    # according to https://docs.python.org/3/library/logging.config.html#dictionary-schema-details
+    allowed_fields = {
+        "version",
+        "formatters",
+        "filters",
+        "handlers",
+        "loggers",
+        "root",
+        "incremental",
+        "disable_existing_loggers",
+    }
+
+    if logging_module == "picologging":
+        allowed_fields.remove("incremental")
+
+    with patch(f"{logging_module}.config.dictConfig") as dict_config_mock:
+        LoggingConfig(logging_module=logging_module).configure()
+        assert dict_config_mock.called
+        for key in dict_config_mock.call_args.args[0].keys():
+            assert key in allowed_fields
